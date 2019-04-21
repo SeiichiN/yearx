@@ -58,19 +58,19 @@ let wareki_list =
 
 (*
  * 和暦からグレゴリオ暦を求める
- * @param: nengo -- (string) たとえば "h23" などの文字列
+ * @param: nengo -- (string) たとえば "元禄14" などの文字列
  *         l     -- (list)   wareki_list を想定している
  * @return: suuji + num -- (int) gregorian year
  *)
 let rec gregorio nengo l = 
     let nengo_len = String.length nengo in
-    let alpha = String.sub nengo 0 1 in
-    let suuji = String.sub nengo 1 (nengo_len - 1) in
+    let moji = String.sub nengo 0 6 in
+    let suuji = String.sub nengo 6 (nengo_len - 6) in
     let num = int_of_string suuji in
     match l with
     [] -> 0
     | (gengo, suuji) :: rest ->
-            if alpha = gengo then suuji + num
+            if moji = gengo then suuji + num
             else gregorio nengo rest;;
             
 (*
@@ -121,7 +121,7 @@ let gre_wareki () =
  * 画面処理 -- gregorio 関数を呼び出す
  *)
 let wareki_gre () =
-    print_string "和暦を入力（例：h23）> ";
+    print_string "和暦を入力（例：元禄14）> ";
     flush stdout;
     let wa_year = input_line stdin in
     let gre_year = string_of_int (gregorio wa_year wareki_list) in

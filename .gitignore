@@ -2,3 +2,6 @@ yearx
 yearxbak
 yearx1
 yearx2
+*.cmi
+*.cmo
+
