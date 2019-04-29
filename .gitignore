@@ -5,3 +5,7 @@ yearx2
 *.cmi
 *.cmo
 doc
+yearx-gui
+yearx-g
+*.ml~
+
