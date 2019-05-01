@@ -1,5 +1,5 @@
 (*
- * 年号変換プログラム ver 0.3 -- labltk バージョン
+ * 年号変換プログラム ver 0.4 -- labltk バージョン
  *
  *     2019 Seiichi Nukayama
  *)
@@ -9,7 +9,7 @@
 
 open Tk;;
 
-let ver = "0.3";;
+let ver = "0.4";;
 
 (* ware = true --> グレゴリオ暦から和暦を求める処理
  * gre  = true --> 和暦からグレゴリオ暦を求める処理 *)
@@ -101,27 +101,49 @@ let rec wareki year = function
 
 let kotae = ref "";;  (* 答えの文字 *)
 
+let wareki_select = ref "";;  (* 和暦選択で選択した和暦 *)
+
 let top = openTk ();;  (* 一番基礎のウィンドウ -- Tcl/Tk initialize *)
 
 let tv_kotae = Textvariable.create ();;  (* 答えをいれる場所 *)
 
-let print_kotae tv =
+let print_kotae tv =    (* tv に答えをセットする *)
   Textvariable.set tv !kotae;;
 
-let chg2seireki entry_nengo entry_year =
-  let nengo = Entry.get entry_nengo
-  and year = Entry.get entry_year in
+let tv_wareki = Textvariable.create ();;  (* 和暦を入れる場所 *)
+
+let print_wareki tv =                (* tv に和暦をセットする *)
+    Textvariable.set tv !wareki_select;;
+
+(* GUIから和暦を読み取って、西暦変換関数を呼び出し、tvにセットする *)
+let chg2seireki nengo entry_year =
+  let year = Entry.get entry_year in
   let nengo_year = nengo ^ year in
   let seireki_year = gregorio nengo_year wareki_list in
   kotae := Printf.sprintf "西暦 %d年" seireki_year;
   print_kotae tv_kotae;;
                             
-  
+(* GUIから西暦を読み取って、和暦変換関数を呼び出し、tvにセットする *)
 let chg2nengo entry =
   let seireki_year = int_of_string (Entry.get entry) in
   let (nengo, year) = wareki seireki_year wareki_list in
   kotae := Printf.sprintf "%s %d 年" nengo year;
   print_kotae tv_kotae;;
+
+(* -------------------- 和暦選択メニュー作成 ------------ *)
+
+(*
+ * メニューに年号リストを加える
+ * @param -- menu         menuオブジェクト
+ *           wareki_list  和暦リスト
+ *)
+let rec add_menu menu = function
+    [] -> []
+    | (nengo, year) :: rest ->
+            Menu.add_command
+            ~label:nengo
+            ~command:(fun () -> wareki_select := nengo; print_wareki tv_wareki) menu;
+            add_menu menu rest;;
 
 
 (* -------------------- 1段目 ------------------------- *)
@@ -149,14 +171,16 @@ let button_btn1 = Button.create btn1_frame ~text:"年号に変換"
   
 let btn2_frame = Frame.create top;;
 
-let label_L_btn2 = Label.create btn2_frame ~text:"年号"
-and entry1_btn2 = Entry.create btn2_frame ~width:6
+let mb = Menubutton.create btn2_frame ~text:"年号選択" ~relief:`Raised
+and label_L_btn2 = Label.create btn2_frame ~textvariable:tv_wareki ~width:6 ~background:`White
 and label_C_btn2 = Label.create btn2_frame ~text:"-"
 and entry2_btn2 = Entry.create btn2_frame ~width:4
 and label_R_btn2 = Label.create btn2_frame ~text:"年";;
 
+let menu = Menu.create mb;;
+
 let button_btn2 = Button.create btn2_frame ~text:"西暦に変換"
-                                ~command:(fun () -> chg2seireki entry1_btn2 entry2_btn2);;
+                ~command:(fun () -> chg2seireki !wareki_select entry2_btn2);;
   
 
 (* -------------------- 4段目 ------------------------- *)
@@ -167,11 +191,17 @@ let label_kotae = Label.create btn3_frame ~textvariable:tv_kotae ~width:30;;
 
 let button_end = Button.create btn3_frame ~text:"終了" ~command:(fun () -> closeTk(); exit 0);;
 
+(* -------------- コマンド --------------------- *)
+
+add_menu menu wareki_list;;
+
+Menubutton.configure ~menu:menu mb;;
+
 (* -------------------------- pack -------------------------------------- *)
 
 pack [coe label_L_btn1; coe entry_btn1; coe label_R_btn1; coe button_btn1] ~side:`Left;;
 
-pack [coe label_L_btn2; coe entry1_btn2; coe label_C_btn2; coe entry2_btn2; coe label_R_btn2; coe button_btn2] ~side:`Left;;
+pack [coe mb; coe label_L_btn2; coe label_C_btn2; coe entry2_btn2; coe label_R_btn2; coe button_btn2] ~side:`Left;;
 
 pack [coe label_kotae; coe button_end] ~side:`Left;;
     
